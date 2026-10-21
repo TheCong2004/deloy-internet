@@ -232,16 +232,22 @@ export const CalendarWeekProvider: FC<{
 
   // Calendar view data fetcher
   const loadData = useCallback(async () => {
-    const modifiedParams = new URLSearchParams({
-      display: filters.display,
-      customer: filters?.customer?.toString() || '',
-      startDate: newDayjs(filters.startDate).startOf('day').utc().format(),
-      endDate: newDayjs(filters.endDate).endOf('day').utc().format(),
-    }).toString();
+    try {
+      const modifiedParams = new URLSearchParams({
+        display: filters.display,
+        customer: filters?.customer?.toString() || '',
+        startDate: newDayjs(filters.startDate).startOf('day').utc().format(),
+        endDate: newDayjs(filters.endDate).endOf('day').utc().format(),
+      }).toString();
 
-    const data = await (await fetch(`/posts?${modifiedParams}`)).json();
-    return expandPosts(data);
-  }, [filters, params]);
+      const res = await fetch(`/posts?${modifiedParams}`);
+      if (res && res.ok) {
+        const data = await res.json();
+        return expandPosts(data);
+      }
+    } catch (e) {}
+    return [];
+  }, [filters, params, fetch]);
 
   // List view data fetcher
   const listParams = useMemo(() => {
@@ -255,9 +261,14 @@ export const CalendarWeekProvider: FC<{
   }, [listPage, filters.customer, listState, selectedChannels]);
 
   const loadListData = useCallback(async () => {
-    const response = await fetch(`/posts/list?${listParams}`);
-    return expandPostsList(await response.json());
-  }, [listParams]);
+    try {
+      const response = await fetch(`/posts/list?${listParams}`);
+      if (response && response.ok) {
+        return expandPostsList(await response.json());
+      }
+    } catch (e) {}
+    return [];
+  }, [listParams, fetch]);
 
   // SWR for calendar view
   const {
@@ -268,6 +279,7 @@ export const CalendarWeekProvider: FC<{
     filters.display !== 'list' ? `/posts-${params}` : null,
     loadData,
     {
+      fallbackData: [],
       refreshInterval: 3600000,
       refreshWhenOffline: false,
       refreshWhenHidden: false,
@@ -284,6 +296,7 @@ export const CalendarWeekProvider: FC<{
     filters.display === 'list' ? `/posts-list-${listParams}` : null,
     loadListData,
     {
+      fallbackData: [],
       refreshInterval: 3600000,
       refreshWhenOffline: false,
       refreshWhenHidden: false,
@@ -292,12 +305,20 @@ export const CalendarWeekProvider: FC<{
   );
 
   const defaultSign = useCallback(async () => {
-    return await (await fetch('/signatures/default')).json();
-  }, []);
+    try {
+      const res = await fetch('/signatures/default');
+      if (res && res.ok) return await res.json();
+    } catch (e) {}
+    return null;
+  }, [fetch]);
 
   const setList = useCallback(async () => {
-    return (await fetch('/sets')).json();
-  }, []);
+    try {
+      const res = await fetch('/sets');
+      if (res && res.ok) return await res.json();
+    } catch (e) {}
+    return [];
+  }, [fetch]);
 
   const { data: sets, mutate } = useSWR('sets', setList, {
     revalidateOnFocus: false,

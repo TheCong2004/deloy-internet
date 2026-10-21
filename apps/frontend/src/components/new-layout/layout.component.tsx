@@ -58,20 +58,8 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
-  const load = useCallback(async (path: string) => {
-    try {
-      const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-      const timeoutId = controller ? setTimeout(() => controller.abort(), 2000) : null;
-      const res = await fetch(path, controller ? { signal: controller.signal } : undefined);
-      if (timeoutId) clearTimeout(timeoutId);
-      if (res && res.ok) {
-        const data = await res.json();
-        if (data && data.id) return data;
-      }
-    } catch (e) {
-      // Backend unreachable or blocked by browser Private Network Access
-    }
-    return {
+  const defaultFallbackUser = useMemo(
+    () => ({
       id: 'usr_default',
       email: 'admin@nexpulse.local',
       name: 'NexPulse User',
@@ -95,10 +83,37 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
       updatedAt: new Date(),
       deletedAt: null,
       org: { id: 'org_default', name: 'NexPulse Workspace' },
-    };
-  }, [fetch]);
+    }),
+    []
+  );
+
+  const load = useCallback(
+    async (path: string) => {
+      try {
+        const controller =
+          typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const timeoutId = controller
+          ? setTimeout(() => controller.abort(), 1500)
+          : null;
+        const res = await fetch(
+          path,
+          controller ? { signal: controller.signal } : undefined
+        );
+        if (timeoutId) clearTimeout(timeoutId);
+        if (res && res.ok) {
+          const data = await res.json();
+          if (data && data.id) return data;
+        }
+      } catch (e) {
+        // Backend unreachable or offline
+      }
+      return defaultFallbackUser;
+    },
+    [fetch, defaultFallbackUser]
+  );
+
   const { data: user, mutate } = useSWR('/user/self', load, {
-    // set before anything renders a date in the user's timezone
+    fallbackData: defaultFallbackUser,
     onSuccess: (data) => setUserTimezone(data?.timezoneName),
     revalidateOnFocus: false,
     revalidateOnReconnect: false,

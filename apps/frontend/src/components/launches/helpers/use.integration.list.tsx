@@ -8,8 +8,15 @@ export const useIntegrationList = () => {
   const fetch = useFetch();
 
   const load = useCallback(async (path: string) => {
-    return (await (await fetch(path)).json()).integrations;
-  }, []);
+    try {
+      const res = await fetch(path);
+      if (res && res.ok) {
+        const json = await res.json();
+        return json?.integrations || [];
+      }
+    } catch (e) {}
+    return [];
+  }, [fetch]);
 
   return useSWR('/integrations/list', load, {
     revalidateOnFocus: false,
