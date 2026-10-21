@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Logo } from '@gitroom/frontend/components/new-layout/logo';
 import { jakartaSans } from '@gitroom/frontend/fonts/plus-jakarta-sans/plus.jakarta.sans.font';
 const ModeComponent = dynamic(
@@ -46,6 +46,32 @@ import { TrialTracker } from '@gitroom/frontend/components/layout/gtm.component'
 import { setSentryUser } from '@gitroom/react/sentry/initialize.sentry.client';
 import { setUserTimezone } from '@gitroom/frontend/components/layout/set.timezone';
 
+const DEFAULT_FALLBACK_USER = {
+  id: 'usr_default',
+  email: 'admin@nexpulse.local',
+  name: 'NexPulse User',
+  tier: 'PRO' as const,
+  role: 'ADMIN' as const,
+  admin: false,
+  orgId: 'org_default',
+  publicApi: '',
+  totalChannels: 10,
+  impersonate: false,
+  allowTrial: false,
+  isTrailing: false,
+  streakSince: null,
+  timezoneName:
+    typeof Intl !== 'undefined'
+      ? Intl.DateTimeFormat().resolvedOptions().timeZone
+      : 'Asia/Ho_Chi_Minh',
+  account: [],
+  provider: 'local',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  deletedAt: null,
+  org: { id: 'org_default', name: 'NexPulse Workspace' },
+};
+
 export const LayoutComponent = ({ children }: { children: ReactNode }) => {
   const fetch = useFetch();
 
@@ -58,34 +84,8 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
-  const defaultFallbackUser = useMemo(
-    () => ({
-      id: 'usr_default',
-      email: 'admin@nexpulse.local',
-      name: 'NexPulse User',
-      tier: 'PRO' as const,
-      role: 'ADMIN' as const,
-      admin: false,
-      orgId: 'org_default',
-      publicApi: '',
-      totalChannels: 10,
-      impersonate: false,
-      allowTrial: false,
-      isTrailing: false,
-      streakSince: null,
-      timezoneName:
-        typeof Intl !== 'undefined'
-          ? Intl.DateTimeFormat().resolvedOptions().timeZone
-          : 'Asia/Ho_Chi_Minh',
-      account: [],
-      provider: 'local',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      deletedAt: null,
-      org: { id: 'org_default', name: 'NexPulse Workspace' },
-    }),
-    []
-  );
+
+  const defaultFallbackUser = DEFAULT_FALLBACK_USER;
 
   const load = useCallback(
     async (path: string) => {
