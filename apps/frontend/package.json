@@ -1,0 +1,26 @@
+{
+  "name": "postiz-frontend",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "dev": "dotenv -e ../../.env -- next dev -p 4200",
+    "fetch-gtm": "node scripts/fetch-gtm.mjs",
+    "postinstall": "node scripts/fetch-gtm.mjs",
+    "build": "next build",
+    "build:worker": "node ../../scripts/patch-cloudflare-build.mjs && opennextjs-cloudflare build",
+    "preview:worker": "wrangler dev",
+    "deploy:worker": "node ../../scripts/patch-cloudflare-build.mjs && opennextjs-cloudflare build && wrangler deploy --minify --no-upload-source-maps",
+    "build:sentry": "dotenv -e ../../.env -- next build",
+    "start": "dotenv -e ../../.env -- next start -p 4200",
+    "pm2": "pm2 start pnpm --name frontend -- start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@cloudflare/workers-types": "^5.20261019.1",
+    "@opennextjs/cloudflare": "^1.20.12",
+    "wrangler": "^4.151.3"
+  }
+}
